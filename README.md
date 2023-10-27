@@ -23,4 +23,4 @@ python convert.py \
 
 ## Contact
 
-For any inquiries or to report issues, please open an issue on this repository or contact the repository owner at your@email.com.
+For any inquiries or to report issues, please open an issue on this repository.
