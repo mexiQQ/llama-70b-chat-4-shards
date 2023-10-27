@@ -1,6 +1,7 @@
 # llama-70b-chat-4-shards
 
 This repository contains a script to transform the weights of Llama v2 70B (chat) from an 8-shard configuration to a 4-shard configuration, making it more accessible for users with machines that have only 4 GPUs.
+(
 
 ## Introduction
 
@@ -15,6 +16,9 @@ python convert.py \
     --output_llama_path ~/llama-2-70b-chat-4-shards \
     --output_shards 4
 ```
+
+## Star as Activation
+If this script proves useful in your work or projects, please consider giving it a star on GitHub. Your support helps to make the project more visible, encourages future development, and is greatly appreciated
 
 ## Acknowledgements
 
