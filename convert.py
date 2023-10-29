@@ -200,18 +200,18 @@ def convert_to_llama_70b_2(state_dict, input_base_path, output_llama_dir, num_sh
     for key, value in new_weights.items():
         if "norm" in key:
             for i in range(num_shards):
-                weight_shards[i][key] = value
+                weight_shards[i][key] = value.clone()
 
         if "wk" in key or "wq" in key or "wv" in key:
             for i in range(num_shards):
-                weight_shards[i][key] = value[i].view(-1, dim)
+                weight_shards[i][key] = value[i].view(-1, dim).clone()
 
         if "wo" in key or "w1" in key or "w2" in key or "w3" in key or "tok_embeddings" in key or "output" in key:
             for i in range(num_shards):
-                weight_shards[i][key] = value[i]
+                weight_shards[i][key] = value[i].clone()
 
     for i in range(num_shards):
-        weight_shards[i]["rope.freqs"] = inv_freq
+        weight_shards[i]["rope.freqs"] = inv_freq.to(torch.bfloat16).clone()
         
     # Save the sharded weights in the expected format
     for i, shard in enumerate(weight_shards):
