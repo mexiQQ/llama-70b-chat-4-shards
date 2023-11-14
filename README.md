@@ -2,7 +2,7 @@
 
 This repository contains a script to transform the weights of Llama v2 70B (chat) from an 8-shard configuration to a 4-shard configuration, making it more accessible for users with machines that have only 4 GPUs.
 
-For convenience, you can directly download from https://huggingface.co/Jinawei/llama-v2-70b-chat-4-shards
+For convenience, you can directly download weights from https://huggingface.co/Jinawei/llama-v2-70b-chat-4-shards
 
 ## Introduction
 
