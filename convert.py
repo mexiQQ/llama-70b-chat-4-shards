@@ -130,7 +130,7 @@ def convert_to_llama_70b_1(input_base_path, llama_version, num_shards=8):
 
     return new_weights
 
-def convert_to_llama_70b_2(state_dict, input_base_path, output_llama_dir, num_shards=4):
+def convert_to_llama_70b_2(state_dict, input_base_path, output_llama_dir, llama_version, num_shards=4):
 
     params = read_json(os.path.join(input_base_path, "params.json"))
     n_layers = params["n_layers"]
@@ -192,8 +192,9 @@ def convert_to_llama_70b_2(state_dict, input_base_path, output_llama_dir, num_sh
         new_weights[f"layers.{layer_i}.ffn_norm.weight"] = state_dict[f"layers.{layer_i}.ffn_norm.weight"].clone()
 
     # Handle the embeddings and output head weights
+    concat_dim = 0 if llama_version == 3 else 1
     new_weights["tok_embeddings.weight"] = torch.chunk(
-        state_dict[f"tok_embeddings.weight"], num_shards, dim=1
+        state_dict[f"tok_embeddings.weight"], num_shards, dim=concat_dim
     )
     new_weights["norm.weight"] = state_dict["norm.weight"]
     new_weights["output.weight"] = torch.chunk(
@@ -256,6 +257,7 @@ def main():
         state_dict1,
         args.input_llama_path,
         args.output_llama_path,
+        args.llama_version,
         num_shards = args.output_shards
     )
 
