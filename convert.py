@@ -15,8 +15,12 @@ def write_json(text, path):
     with open(path, "w") as f:
         json.dump(text, f)
 
+def copy_json(input_base_path, output_llama_dir):
+    ori_params_path = os.path.join(input_base_path, "params.json")
+    out_params_path = os.path.join(output_llama_dir, "params.json")
+    shutil.copyfile(ori_params_path, out_params_path)
 
-def convert_to_llama_70b_1(input_base_path, num_shards=8):
+def convert_to_llama_70b_1(input_base_path, llama_version, num_shards=8):
     params = read_json(os.path.join(input_base_path, "params.json"))
     n_layers = params["n_layers"]
     # n_layers = 2
@@ -113,8 +117,9 @@ def convert_to_llama_70b_1(input_base_path, num_shards=8):
             f"layers.{layer_i}.ffn_norm.weight"
         ]
 
+    concat_dim = 0 if llama_version == 3 else 1
     new_weights["tok_embeddings.weight"] = torch.cat(
-        [loaded[i]["tok_embeddings.weight"] for i in range(num_shards)], dim=1
+        [loaded[i]["tok_embeddings.weight"] for i in range(num_shards)], dim=concat_dim
     )
     new_weights["norm.weight"] = loaded[0]["norm.weight"]
     new_weights["output.weight"] = torch.cat([loaded[i]["output.weight"] for i in range(num_shards)], dim=0)
@@ -125,7 +130,7 @@ def convert_to_llama_70b_1(input_base_path, num_shards=8):
 
     return new_weights
 
-def convert_to_llama_70b_2(state_dict, input_base_path, output_llama_dir, num_shards=4):
+def convert_to_llama_70b_2(state_dict, input_base_path, output_llama_dir, llama_version, num_shards=4):
 
     params = read_json(os.path.join(input_base_path, "params.json"))
     n_layers = params["n_layers"]
@@ -187,8 +192,9 @@ def convert_to_llama_70b_2(state_dict, input_base_path, output_llama_dir, num_sh
         new_weights[f"layers.{layer_i}.ffn_norm.weight"] = state_dict[f"layers.{layer_i}.ffn_norm.weight"].clone()
 
     # Handle the embeddings and output head weights
+    concat_dim = 0 if llama_version == 3 else 1
     new_weights["tok_embeddings.weight"] = torch.chunk(
-        state_dict[f"tok_embeddings.weight"], num_shards, dim=1
+        state_dict[f"tok_embeddings.weight"], num_shards, dim=concat_dim
     )
     new_weights["norm.weight"] = state_dict["norm.weight"]
     new_weights["output.weight"] = torch.chunk(
@@ -224,11 +230,15 @@ def main():
     parser.add_argument("--input_shards", type=int, default=8)
     parser.add_argument("--output_llama_path", help="Path to save the converted LLaMA model.")
     parser.add_argument("--output_shards", type=int, default=4)
+    parser.add_argument("--llama_version", type=int, default=3)
     args = parser.parse_args()
     os.makedirs(args.output_llama_path, exist_ok=True)
-    
+
+    copy_json(args.input_llama_path, args.output_llama_path)
+
     state_dict1 = convert_to_llama_70b_1(
         args.input_llama_path,
+        args.llama_version,
         num_shards = args.input_shards
     )
 
@@ -247,6 +257,7 @@ def main():
         state_dict1,
         args.input_llama_path,
         args.output_llama_path,
+        args.llama_version,
         num_shards = args.output_shards
     )
 
